@@ -1,0 +1,129 @@
+1.创建名为project的项目命令  django-admin startproject project(项目名称)
+  注：所有路径不要有中文
+2.目录层级说明：manage.py  一个命令行工具，可以让我们用多种方式对Django项目进行交互
+                __init__.py 一个空文件，它告诉Python这个目录应该被看做一个包
+                settings.py 项目的配置文件（主要处理文件）
+                urls.py     项目的url声明 （主要处理文件）
+                wsgi.py     项目与WSGI兼容的Web服务器入口
+				
+3.配置数据库：Django默认使用SQLite数据库
+              在settings.py文件中通过DATABASES选项进行数据库配置
+			  在__init__.py文件中写入两行代码
+			  import pymysql
+              pymysql.install_as_MySQLdb()
+			  以数据库sunck为例进行示范：对settings.py中的DATABASES进行设置
+              DATABASES = {
+                'default': {
+                    'ENGINE': 'django.db.backends.mysql',
+                    'NAME': "sunck",
+                    'USER': "root",
+                    'PASSWORD': "admin123",
+                    'HOST': "localhost",
+                    'PORT': "3306"
+                }
+              }
+			  
+4.创建应用：在一个项目中可以创建多个应用，每个应用进行一种业务处理
+            打开CMD,进入project(目录名)的目录下，输入命令创建名为myApp的app:
+            python manage.py startapp myAPP
+            myAPP目录说明
+            admin.py    进行站点配置
+            models.py   创建模型
+            views.py    创建视图
+			
+5.激活应用：在settings.py文件中，将myApp应用加入到INSTALLED_APPS选项中
+         INSTALLED_APPS = [
+            'django.contrib.admin',
+            'django.contrib.auth',
+            'django.contrib.contenttypes',
+            'django.contrib.sessions',
+            'django.contrib.messages',
+            'django.contrib.staticfiles',
+            'myApp',
+         ]
+		 
+6.定义模型：概述：有一个数据表就对应有一个模型
+           在models.py文件中定义模型
+           引入：from django.db import models
+           模型类要继承models.Model类
+           示例：
+                class Grades(models.Model):
+                    gname = models.CharField(max_length=20)
+                    gdate = models.DateTimeField()
+                    ggirlnum = models.IntegerField()
+                    gboynum = models.IntegerField()
+                    isDelete = models.BooleanField(default=False)
+
+                class Students(models.Model):
+                    sname = models.CharField(max_length=20)
+                    sgender = models.BooleanField(default=True)
+                    sage = models.IntegerField()
+                    scontend = models.CharField(max_length=20)
+                    isDelete = models.BooleanField(default=False)
+                    sgrade = models.ForeignKey("Grades", on_delete=models.CASCADE,)
+            说明：
+                不需要定义主键，在生成时自动添加，并且值为自动增加
+				
+7.在数据库中生成数据表
+    生成迁移文件
+        执行 python manage.py makemigrations    在migrations目录下生成一个迁移文件，此时数据库中还没有生成数据表
+    执行迁移
+        执行 python manage.py migrate           相当于执行MySQL语句创建了数据表
+
+8.测试数据操作
+  进入到python shell
+    执行 python manage.py shell
+  引入包
+    from myApp.models import Grades, Students
+    from django.utils import timezone
+    from datetime import *
+  查询所有数据
+    类名.objects.all()
+    示例： Grades.objects.all()
+	添加数据
+    本质：创建一个模型类的对象实例
+    示例：CMD窗口下：
+        grade1 = Grades()
+        grade1.gname = "python04"
+        grade1.gdate = datetime(year=2017, month=7, day=17)
+        grade1.ggirlnum = 3
+        grade1.gboynum = 70
+        grade1.save()
+  查看某个对象
+    类名.objects(pk=索引号)
+    示例：
+        Grades.objects.get(pk=2)
+        Grades.objects.all()
+	修改某个数据
+    模型对象属性 = 新值
+    示例：
+        grade2.gboynum = 60
+        grade2.save()
+  删除数据
+    模型对象.delete()
+    grade2.delete()
+    注意：这是物理删除，数据库中的相应数据被永久删除
+  关联对象
+    示例：
+        stu = Students()
+        stu.sname = "Xue Yanmei"
+        stu.sgender = False
+        stu.sage = 20
+        stu.scontend = "I am Xue Yanmei"
+        stu.sgrade = grade1
+        stu.save()
+    获得关联对象的集合
+        需求：猎取python04班级的所有学生
+             对象名.关联的类名小写_set.all()
+             示例：grade1.students_set.all()
+        需求:创建曾志伟，属于python04班级
+            示例：
+                stu3 = grade1.students_set.create(sname=u'Zhen Zhiwei',sgender=True,scontend=u"I am Zhen Zhiwei",sage=45)
+            注意：这样创建的数据直接被添加到了数据库当中。
+9.启动服务器:
+    格式：python manage.py runserver ip:port
+    注意：ip可以不写，不写代表本机ip
+    端口号默认是8000
+    python manage.py runserver
+    说明：
+        这是一个纯python编写的轻量级web服务器，仅仅在开发测试中使用这个
