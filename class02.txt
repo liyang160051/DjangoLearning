@@ -1,0 +1,123 @@
+1.视图的基本使用
+    概述：
+        在Django中，视图是对web请求进行回应
+        视图就是一个python函数，在views.py文件中定义。
+    定义视图：
+        示例：在myApp\views.py中写入
+            from django.shortcuts import render
+            # Create your views here.
+            from django.http import HttpResponse
+            def index(request):
+                return HttpResponse("Sunck is a good man")
+    配置url：方法一：path方法:
+        修改project目录下的urls.py文件：
+            from django.contrib import admin
+            from django.urls import path, include
+            urlpatterns = [
+                path('admin/', admin.site.urls),
+                path('', include('myApp.urls')),
+            ]
+        在myApp应用目录下创建urls.py文件：
+            from django.urls import path, include
+            from . import views
+            urlpatterns = [
+                path('',views.index),
+            ]
+    配置url：方法二：url方法:
+        修改project目录下的urls.py文件：
+            from django.contrib import admin
+            from django.conf.urls import url,include
+            urlpatterns = [
+                url(r'^admin/', admin.site.urls),
+                url(r'^', include('myApp.urls')),
+            ]
+        在myApp应用目录下创建urls.py文件：
+            from django.conf.urls import url
+            from . import views
+            urlpatterns = [
+                url(r'^$', views.index),
+            ]
+
+2.模板的基本使用：
+    概述：模板是HTML页面，可以根据视图中传递过来的数据进行填充
+    创建模板：
+        创建templates目录，在目录下创建对应项目的模板目录（project/templates/myApp）
+    配置模板路径：
+        修改settings.py文件下的TEMPLATES下的'DIRS'为'DIRS': [os.path.join(BASE_DIR, 'templates')],
+    定义grades.html与students.html模板：
+        在templates\myApp\目录下创建grades.html与students.html模板文件
+        模板语法：
+            {{输出值，可以是变量，也可以是对象，属性}}
+            {%执行代码段%}
+    http://127.0.0.1:8000/grades
+        写grades.html模板：
+            <!doctype html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport"
+                      content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+                <meta http-equiv="X-UA-Compatible" content="ie=edge">
+                <title>班级信息</title>
+            </head>
+            <body>
+                <h1>班级信息列表</h1>
+                <ul>
+                    <!--[python04, python05, python06]-->
+                    {%for grade in grades%}
+                    <li>
+                        <a href="#">{{grade.gname}}</a>
+                    </li>
+                    {%endfor%}
+                </ul>
+            </body>
+            </html>
+        定义视图：myApp\views.py
+            from .models import Grades
+            def grades(request):
+                # 去模板里取数据
+                gradesList = Grades.objects.all()
+                # 将数据传递给模板,模板再渲染页面，将渲染好的页面返回给浏览器
+                return render(request, 'myApp/grades.html', {"grades": gradesList})
+        配置url:myApp\urls.py
+        urlpatterns = [
+            url(r'^$', views.index),
+            url(r'^(\d+)/(\d+)$', views.detail),
+            url(r'^grades/', views.grades)
+        ]
+    http://127.0.0.1:8000/students
+        写students.html模板
+            <!doctype html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport"
+                      content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+                <meta http-equiv="X-UA-Compatible" content="ie=edge">
+                <title>学生页面</title>
+            </head>
+            <body>
+                <h1>学生信息列表</h1>
+                <ul>
+                    {%for student in students%}
+                    <li>
+                        {{student.sname}}--{{student.scontend}}
+                    </li>
+                    {%endfor%}
+                </ul>
+            </body>
+            </html>
+        定义视图：myApp\views.py
+            from .models import Students
+            def students(request):
+                studentsList = Students.objects.all()
+                return render(request, 'myApp/students.html', {"students": studentsList})
+        配置url:myApp\urls.py
+            urlpatterns = [
+            url(r'^$', views.index),
+            url(r'^(\d+)/(\d+)$', views.detail),
+            url(r'^grades/', views.grades),
+            url(r'^students/', views.students),
+        ]
+    需求:点击班级，显示对应班级的学生名字
+        运行不正常https://www.bilibili.com/video/av17879644/?p=12

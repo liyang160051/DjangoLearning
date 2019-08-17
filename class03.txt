@@ -1,0 +1,26 @@
+1.Django流程梳理
+    创建工程：执行 django-admin startproject 工程名
+    创建项目：执行 python manage.py startapp 项目名称
+    激活项目：修改 settings.py中的INSTALLED_APPS
+    配置数据库：
+        修改__init__.py文件
+        修改settings.py文件中的DATABASES
+    创建模型类：在项目目录下的models.py文件中创建
+    生成迁移文件：执行python manage.py makemigrations
+    执行迁移：执行python manage.py migrate
+    配置站点：略
+    创建模板目录/项目模板目录
+    在settings.py中的TEMPLATES添加templates路径
+    在工程目录下（project）修改urls.py
+    在项目目录下创建urls.py
+
+
+2.使用他人Django代码需要的简易修改：
+  在settings.py中修改数据库名
+  在settings.py中修改数据库密码
+  删除由内向外文件（在对应目录里鼠标右键删除）
+  在数据库中创建对应第一步的数据库(自己在SQL中创建)
+  执行生成迁移文件
+  执行迁移
+  启动服务
+  浏览器测试

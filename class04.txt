@@ -1,0 +1,199 @@
+Django模型
+    Django对各种数据库提供了很好的支持，Django为这些数据库提供了统一的调用API
+    我们可以根据不同的业务需求选择不同的数据库。
+    配置数据库
+        修改工程目录下的__init__.py文件
+            import pymysql
+            pymysql.install_ad_MySQLdb()
+        修改settings.py文件中的DATABASES
+    开发流程
+        配置数据库
+        定义模型类：一个模型都在数据库中对应一张数据库表
+        生成迁移文件
+        执行迁移生成数据表
+        使用模型类进行增删改查
+    ORM
+        概述：对象-关系-映射
+        任务：
+            根据对象的类型生成表结构
+            将对象，列表的操作转换成SQL语句
+            将SQL语句查询到的结果转换为对象，列表
+        优点：
+            极大的减轻了开发人员的工作量，不需要面对因数据库的变更而修改代码的问题
+    定义模型
+        模型，属性，表，字段之间的关系
+            一个模型类在数据库中对应一张表，在模型类中定义的属性，对应该模型对照表中的一个字段
+        定义属性：见下文
+        创建模型类
+        元选项
+            在模型类中定义Meta类，用于设置元信息
+            示例：
+                class Meta:
+                    db_table = "students"
+                    ordering = ['id']
+            db_table
+                定义数据表名，推荐用小写字母，数据表名默认为项目名小写_类名小写
+            ordering
+                对象的默认排序字段，获取对象的列表时使用
+                示例：
+                    ordering['id'] id按升序排列
+                    ordering['-id'] id按降序排列
+                注意：排序会增加数据库开销
+    模型成员
+        类属性
+            隐藏类属性objects：
+                是Manager类型的一个对象，作用是与数据库进行交互
+                当定义模型类时没有指定管理器，则Django为模型创建一个名为objects的管理器
+            自定义管理器示例：
+                定义stuObj管理器：
+                    stuObj = models.Manager()
+                当为模型指定模型管理器，Django就不再为模型类生成objects模型管理器了。
+            自定义管理器Manager类
+                模型管理器是Django的模型进行与数据库交互的窗口，一个模型可以有多个模型管理器
+                作用：
+                    向管理器类中添加额外的方法
+                    修改管理器返回的原始查询集
+                        通常会重写get_queryset()方法
+                代码示例：
+                    class StudentsManager(models.Manager):
+                        def get_queryset(self):
+                            return super(StudentsManger, self).get_queryset().filter(isDelete=False)
+
+                    class Students(model.Moder):
+                        # 自定义模型管理器
+                        # 当自定义模型管理器，objects就不存在了
+                        stuObj = models.Manger()
+                        stuObj2 = StudentsManager()
+
+        创建对象
+            目的：向数据库中添加数据
+            当创建对象时，django不会对数据库进行读写操作，当调用save()方法时才与数据库交互，将对象保存在数据库表中。
+            注意：
+                __init__方法已经在父类models.Model中使用，在自定义的模型中无法使用。
+            方法：
+                在模型类中增加一个类方法，示例如下：
+                    class Students(model.Moder):
+                        ...snip...
+                         @classmethod
+                        def createStudent(cls, name, age, gender, contend,
+                                          grade,lastT, createT, isD=False):
+                            stu = cls(sname=name, sage=age, sgender=gender,
+                                        scontend=contend, sgrade=grade, lastTime=lastT, createTime=createT,
+                                        isDelete=isD)
+                            return stu
+                在自定义管理器中添加一个方法,示例如下：
+                    class StudentsManager(models.Manager):
+                        def get_queryset(self):
+                            return super(StudentsManager, self).get_queryset().filter(isDelete=False)
+                        def createStudent(self, name, age, gender, contend, grade, lastT, createT, isD=False):
+                            stu = self.model()
+                            # print(type(grade))
+                            stu.sname = name
+                            stu.sage = age
+                            stu.sgender = gender
+                            stu.scontend = contend
+                            stu.sgrade = grade
+                            stu.lastTime = lastT
+                            stu.createTime = createT
+                            return stu
+        模型查询
+            概述
+                查询集表示从数据库获取的对象的集合
+                查询集可以有多个过滤器
+                过滤器就是一个函数，基于所给的参数限制查询集结果
+                从SQL角度来说，查询集和select语句等价，过滤器就像where条件
+            查询集
+                在管理器上调用过滤器方法返回查询集
+                查询集经过过滤器筛选后返回新的查询集，所以可以写成链式调用
+                惰性执行
+                    创建查询集不会带来任何数据库的访问，直到调用数据库时，才会访问数据
+                直接访问数据的情况：
+                    迭代
+                    序列化
+                    与if合用
+                返回查询集的方法称为过滤器
+                    all()：返回查询集中的所有数据
+                    filter()：保留符合条件的数据
+                        filter(键=值)
+                        filter(键=值，键=值)
+                        filter(键=值).filter(键=值)   且的关系
+                    exclude()：过滤掉符合条件的
+                    order_by()：排序
+                    values():一条数据就是一个字典，返回一个列表
+                    get()
+                        返回一个满足条件的对象
+                        注意：
+                            如果没有找到符合条件的对象，会引发模型类.DoesNotExist异常
+                            如果找到多个对象，会引发模型类MultipleObjectsReturned异常
+                    count()：返回查询集中对象的个数
+                    first()：返回查询集中第一个对象
+                    last():返回查询集中最后一个对象
+                    exits()：判断查询集中是否有数据，如果有数据返回 True,否则返回 False.
+                限制查询集
+                    查询集返回列表，可以使用下标的方法进行限制，等同于sql中的limit语句
+                    注意：下标不能是负数
+                    示例：studentsList = Students.stuObj2.all()[0:5]
+                查询集的缓存
+                    概述：
+                        每个查询集都包含一个缓存，来最小化对数据库的访问
+                        在新建的查询集中，缓存首次为空，第一次对查询集求值，会发生数据缓存，Django会将查询出来的数据做一个缓存，并返回查询结果。
+                        以后的查询直接使用查询集的缓存
+                字段查询
+                    概述
+                        实现了sql中的where语句，作为方法filter(),exclude(),get()的参数
+                        语法：属性名称__比较运算符=值
+                        外键：属性名称_id
+                        转义：类似sql中的like语句
+                             like有关情况看我哥他%是为了匹配点位，匹配数据中的%使用（where like "\%"）
+                             filter(sname__contains="%")
+                    比较运算符
+                        exact:判断，大小写敏感
+                            filter(isDelete=False)
+                        contains：是否包含，大小写敏感
+                            studentsList = Students.stuObj2.filter(sname__contains="孙")
+                        startswith,endswith:以value开头或结尾，大小写敏感
+                        以上四个在前面加上i，就表示不区分大小写iexact,icontains,istartswith,iendswith
+                        isnull,isnotnull
+                            是否为空
+                            filter(sname__isnull=False)
+                        in:是否包含在范围内
+                        gt大于,gte大于等于,lt小于,lte小于等于
+                        year,month,day,week_day,hour,minute,second
+                            studentsList = Students.stuObj2.filter(lastTime__year=2017)
+                        跨关联查询
+                            处理join查询
+                                语法:
+                                    模型类名__属性名__比较运算符
+                                    # 描述中带有‘薛延美’这三个字的数据是属于哪个班级的
+                                    grade = Grades.objects.filter(students__scontend__contains='薛延美')
+                                    print(grade)
+                            查询快捷pk代表的主键
+                        聚合函数
+                            使用aggregate函数返回聚合函数的值
+                            Avg
+                            Count
+                            Max
+                                maxAge = Student.stuObj2.aggregate(Max('sage'))
+                                maxAge为最大的sage。
+                            Min
+                            Sum
+                        F对象
+                            可以使用模型的A属性与B属性进行比较
+                            from django.db.models import F,Q
+                            def grades1(request):
+                                g = Grades.objects.filter(ggirlnum__gt=F('gboynum'))
+                                print(g)
+                                # [<Grades: python02>,<Grades: python03>]
+                                return HttpResponse("OOOOOOOo")
+                            支持F对象的算术运算
+                                g = Grades.objects.filter(ggirlnum__gt=F('gboynum')+20)
+                        Q对象
+                            概述：过滤器的方法的关键字参数，条件为And模式
+                            需求：进行or查询
+                            解决：使用Q对象
+                                def students4(request):
+                                    studentsList = Students.stuObj2.filter(Q(pk__lte=3) | Q(sage__gt=50))
+                                    return render(request, 'myApp/students.html', {"students": studentsList})
+                                只有一个Q对象的时候，就是用于正常匹配条件
+                                studentsList = Students.stuObj2.filter(~Q(pk__lte=3))
+                                ~Q是取反
