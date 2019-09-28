@@ -7,3 +7,5 @@ class03:django流程梳理
 class04:django模型
 class05:django模型属性
 class06:视图详细介绍
+class07:模板
+class08:高级属性
