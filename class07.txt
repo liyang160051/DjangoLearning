@@ -1,0 +1,250 @@
+模板
+    定义模板
+        变量
+            变量传递给模板的数据
+            要遵守标识符规则
+            语法 {{ var }}
+            注意：如果使用的变量不存在，则插入的是空字符串
+            在模板中使用点语法
+                字典查询
+                属性或者方法
+                数字索引
+            在模板中调用对象的方法
+                注意：在模板里定义的函数不能传递self以外的参数
+        标签:语法   {% tag %}
+            作用
+                在输出中创建文本
+                控制逻辑和循环
+        标签示例：    
+            if 格式 
+                    {% if 表达式 %}
+                        语句
+                    {% endif %}
+            if-else 格式   
+                        {% if 表达式 %}
+                            语句1
+                        {% else %}
+                            语句else
+                        {% endif %}
+            if-elif-else 格式 
+                        {% if 表达式 %}
+                            语句1
+                        {% elif 表达式 %}
+                            语句2
+                        ...
+
+                        {% else %}
+                            语句else
+                        {% endif %}
+            for 格式
+                    {% for 变量 in 列表 %}
+                        语句
+                    {% endfor %}
+                格式2
+                    {% for 变量 in 列表 %}
+                        语句
+                    {% empty %}  # 注意：列表为空或者列表不存在时执行语句2
+                        语句2
+                    {% endfor %}
+                格式3
+                    {{ forloop.counter }}
+                示例：
+                    <ul>
+                        {% for stu in students %}
+                            <li>
+                                {{forloop.counter}}--{{stu.sname}}--{{stu.sgrade}}
+                            </li>
+                        {% empty %}
+                            <li>目前没有学生</li>
+                        {% endfor %}
+            commnet 格式
+                {% commnet %}
+                    被注释的内容
+                {% endcomment %}
+                作用：相当于多行注释，被注释的内容不再执行
+            ifequal/ifnotequal 作用 判断是否相等或者不相等
+                格式
+                    {% ifequal 值1 值2 %}
+                        语句1
+                    {% endifequal %}  # 如果值1等于值2，执行语句1，否则不执行语句1
+            include
+                作用：加载模板并以标签内的参数渲染
+                格式：{% include '模板目录' 参数1 参数2 %}
+            url
+                作用：反射解析
+                格式：{% url 'namespace: name' p1 p2 %}
+            csrf_token
+                作用：用于跨站请求伪造保护
+                格式：{% csrf_token %}
+            block, extends
+                作用：用于模板的继承
+            autoescape
+                作用：用于HTML转义
+        过滤器
+            语法 {{ var|过滤器 }}
+            作用：在变量被显示前修改它，只是加一个效果，对变量不会造成影响
+            示例：
+                lower
+                upper
+            过滤器可以传递参数，参数用引号引起来
+                join 格式 列表|join:"#"
+                     示例：{{list1|join:"#"}}
+            如果一个变量没有被提供，或者值为false,空，我们可以通过 default 语法使用默认值
+                格式： {{str1|default:"没有"}}
+            根据给定格式转换日期为字符串：date
+                格式： {{dateVal|date:'y-m-d'}}
+            HTML转义：escape
+            加减乘除示例：
+                <h1>num = {{num|add:10}}</h1>
+                <h1>num = {{num|add:-10}}</h1>
+                <h1>num = {% num widthratio num 1 5%}</h1>
+                <h1>num = {% num widthratio num 5 1%}</h1>
+        注释
+            单行注释：语法： {# 被注释的内容 #}
+            多行注释
+                {% commnet %}
+                    被注释的内容
+                {% endcomment %}
+
+    反射解析
+        示例：
+            project/project/urls.py
+            url(r'^', include('myApp.urls', namespace='app')),
+            project/myApp/urls.py
+            url(r'^good/(\d+)$', views.good, name="good")
+            templates/good.html
+            <a href={% url 'app:good' 1 %}>链接</a>
+
+    模板继承
+        作用：模板继承可以减少页面的重复定义，实现页面的重用
+        block标签：在父模板中预留区域 ，子模板去填充
+            语法 ： {% block 标签名 %}
+
+                    {% endblock 标签名 %}
+        extends标签：继承模板，需要写在模板文件的第一行
+            语法 ： {% extends 'myApp/base.html' %}
+                    {% block main %}
+                        内容
+                    {% endblock 标签名 %}
+        示例：
+            定义父模板
+                body标签中
+                {% block main %}
+                        
+                {% endblock main %}
+
+                {% block main %}
+                        
+                {% endblock main2 %}
+            定义子模板
+                {% extends 'myApp/base.html' %}
+                {% block main %}
+                    <h1>sunck is a good man</h1>
+                {% endblock main %}
+
+                {% block main2 %}
+                    <h1>kaige is a good man</h1>
+                {% endblock main2 %}
+
+    HTML转义
+        问题：return render(request, 'myApp/index.html', {"code": "<h1>sunck is a very good man</h1>"})中的{{code}}
+              {{code}}里的code被当作<h1>sunck is a very good man</h1>显示，未经过渲染
+        解决方法：
+            {{code|safe}}
+        或  {% autoescape off %}
+                {{code}}
+            {% endautoescape %}  # 这个可以一口气解决一堆
+
+    CSRF:
+    跨站请求伪造
+        某些恶意网站包含链接，表单，按钮，js，利用登录用户在浏览器中认证，从而攻击服务
+    防止CSRF
+        在settings.py文件的MIDDLEWARE增加'django.middleware.csrf.CsrfViewMiddleware'
+        {% csrf_token %}        
+
+    验证码
+        作用
+            在用户注册，登录页面的时候使用，为了防止暴力请求，减轻服务器的压力
+            是防止CSRF的一种方式
+
+    验证码代码示例：
+写在views.py里面
+=================================================================================================
+def verifycode(request):
+    # 引入绘图模块
+    from PIL import Image, ImageDraw, ImageFont
+    # 引入随机函数模块
+    import random
+    # 定义变量，用于画面的背景色，宽，高
+    bgcolor = (random.randrange(20, 100), random.randrange(20, 100), random.randrange(20, 100))
+    width = 100
+    height = 50
+    # 创建画面对象
+    im = Image.new('RGB', (width, height), bgcolor)
+    # 创建画面对象
+    draw = ImageDraw.Draw(im)
+    # 调用画笔的point()函数绘制噪点
+    for i in range(0, 100):
+        xy = (random.randrange(0, width), random.randrange(0, height))
+        fill = (random.randrange(0, 255), 255, random.randrange(0, 255))
+        draw.point(xy, fill=fill)
+    # 定义验证码的备选值
+    str = '1234567890QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm'
+    # 随机选取4个值作为验证码
+    rand_str = ''
+    for i in range(0, 4):
+        rand_str += str[random.randrange(0, len(str))]
+    # 构造字体对象
+    font = ImageFont.truetype(r'C:\Windows\Fonts\AdobeArabic-Bold.otf', 40)
+    # 构造字体颜色
+    fontcolor1 = (255, random.randrange(0, 255), random.randrange(0, 255))
+    fontcolor2 = (255, random.randrange(0, 255), random.randrange(0, 255))
+    fontcolor3 = (255, random.randrange(0, 255), random.randrange(0, 255))
+    fontcolor4 = (255, random.randrange(0, 255), random.randrange(0, 255))
+    # 绘制4个字
+    draw.text((5, 2), rand_str[0], font=font, fill=fontcolor1)
+    draw.text((25, 2), rand_str[1], font=font, fill=fontcolor2)
+    draw.text((50, 2), rand_str[2], font=font, fill=fontcolor3)
+    draw.text((75, 2), rand_str[3], font=font, fill=fontcolor4)
+    # 释放画笔 
+    del draw
+    # 存入session,用于做进一步的验证
+    request.session['verifycode'] = rand_str
+    # 内存文件操作
+    import io
+    buf = io.BytesIO()
+    # 将图片保存在内存中，文件类型为png
+    im.save(buf, 'png')
+    # 将内存中的图片数据返回给客户端，MIME类型为图片png
+    return HttpResponse(buf.getvalue(), 'image/png')
+
+
+from django.shortcuts import render, redirect
+def verifycodefile(request):
+    f = request.session["falg"]
+    str = ""
+    if f == False:
+        str = "请重新输入！"
+    request.session.clear()
+    return render(request, 'myApp/verifycodefile.html', {"flag":str})
+
+def verifycodecheck(request):
+    code1 = request.POST.get("verifycode").upper()
+    code2 = request.session["verify"].upper()
+    if code1 == code2:
+        return render(request, 'myApp/success.html')
+    else:
+        request.session["flag"] = False
+        return redirect('/verifycodefile')
+
+==============================================================================
+写在verifycodefile.html的<body>标签中
+<body>
+    <form method="post" action="/verifycodecheck/">
+        {%csrf_token%}
+        <input type="text" name="verifycode"/>
+        <img src="/verifycode">
+        <input type="submit" name="登录">
+        <span>{{flag}}</span>
+    </form>
+</body>

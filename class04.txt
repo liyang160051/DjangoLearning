@@ -59,7 +59,7 @@ Django模型
                         def get_queryset(self):
                             return super(StudentsManger, self).get_queryset().filter(isDelete=False)
 
-                    class Students(model.Moder):
+                    class Students(model.Model):
                         # 自定义模型管理器
                         # 当自定义模型管理器，objects就不存在了
                         stuObj = models.Manger()
@@ -71,9 +71,9 @@ Django模型
             注意：
                 __init__方法已经在父类models.Model中使用，在自定义的模型中无法使用。
             方法：
-                在模型类中增加一个类方法，示例如下：
+                1.在模型类中增加一个类方法，示例如下：
                     class Students(model.Moder):
-                        ...snip...
+                        ...skip...
                          @classmethod
                         def createStudent(cls, name, age, gender, contend,
                                           grade,lastT, createT, isD=False):
@@ -81,7 +81,7 @@ Django模型
                                         scontend=contend, sgrade=grade, lastTime=lastT, createTime=createT,
                                         isDelete=isD)
                             return stu
-                在自定义管理器中添加一个方法,示例如下：
+                2.在自定义管理器中添加一个方法,示例如下：
                     class StudentsManager(models.Manager):
                         def get_queryset(self):
                             return super(StudentsManager, self).get_queryset().filter(isDelete=False)
@@ -179,7 +179,7 @@ Django模型
                             Sum
                         F对象
                             可以使用模型的A属性与B属性进行比较
-                            from django.db.models import F,Q
+                            from django.db.models import F,Qc
                             def grades1(request):
                                 g = Grades.objects.filter(ggirlnum__gt=F('gboynum'))
                                 print(g)
